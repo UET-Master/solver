@@ -1,0 +1,25 @@
+digraph cfg {
+rankdir = TB;
+size = "240"
+graph[fontname = Courier, fontsize = 14.0, labeljust = l, nojustify = true];node[shape = record];
+"0x0"[label="0x00000000 PUSH1 0x80\l0x00000002 PUSH1 0x40\l0x00000004 MSTORE\l0x00000005 CALLVALUE\l0x00000006 DUP1\l0x00000007 ISZERO\l0x00000008 PUSH1 0x0f\l0x0000000a JUMPI\l",style=filled,fillcolor=white];
+"0x0" -> "0xb" [label="",color="red"];
+"0x0" -> "0xf" [label="",color="green"];
+"0xb"[label="0x0000000b PUSH1 0x00\l0x0000000d DUP1\l0x0000000e REVERT\l",style=filled,fillcolor=white];
+"0xf"[label="0x0000000f JUMPDEST\l0x00000010 POP\l0x00000011 PUSH1 0x04\l0x00000013 CALLDATASIZE\l0x00000014 LT\l0x00000015 PUSH1 0x28\l0x00000017 JUMPI\l",style=filled,fillcolor=white];
+"0xf" -> "0x18" [label="",color="red"];
+"0xf" -> "0x28" [label="",color="green"];
+"0x18"[label="0x00000018 PUSH1 0x00\l0x0000001a CALLDATALOAD\l0x0000001b PUSH1 0xe0\l0x0000001d SHR\l0x0000001e DUP1\l0x0000001f PUSH4 0x771602f7\l0x00000024 EQ\l0x00000025 PUSH1 0x2d\l0x00000027 JUMPI\l",style=filled,fillcolor=white];
+"0x18" -> "0x28" [label="",color="red"];
+"0x18" -> "0x2d" [label="",color="green"];
+"0x28"[label="0x00000028 JUMPDEST\l0x00000029 PUSH1 0x00\l0x0000002b DUP1\l0x0000002c REVERT\l",style=filled,fillcolor=white];
+"0x2d"[label="0x0000002d JUMPDEST\l0x0000002e PUSH1 0x4d\l0x00000030 PUSH1 0x04\l0x00000032 DUP1\l0x00000033 CALLDATASIZE\l0x00000034 SUB\l0x00000035 PUSH1 0x40\l0x00000037 DUP2\l0x00000038 LT\l0x00000039 ISZERO\l0x0000003a PUSH1 0x41\l0x0000003c JUMPI\l",style=filled,fillcolor=white];
+"0x2d" -> "0x3d" [label="",color="red"];
+"0x2d" -> "0x41" [label="",color="green"];
+"0x3d"[label="0x0000003d PUSH1 0x00\l0x0000003f DUP1\l0x00000040 REVERT\l",style=filled,fillcolor=white];
+"0x41"[label="0x00000041 JUMPDEST\l0x00000042 POP\l0x00000043 DUP1\l0x00000044 CALLDATALOAD\l0x00000045 SWAP1\l0x00000046 PUSH1 0x20\l0x00000048 ADD\l0x00000049 CALLDATALOAD\l0x0000004a PUSH1 0x5f\l0x0000004c JUMP\l",style=filled,fillcolor=white];
+"0x41" -> "0x5f" [label="",color="black"];
+"0x4d"[label="0x0000004d JUMPDEST\l0x0000004e PUSH1 0x40\l0x00000050 DUP1\l0x00000051 MLOAD\l0x00000052 SWAP2\l0x00000053 DUP3\l0x00000054 MSTORE\l0x00000055 MLOAD\l0x00000056 SWAP1\l0x00000057 DUP2\l0x00000058 SWAP1\l0x00000059 SUB\l0x0000005a PUSH1 0x20\l0x0000005c ADD\l0x0000005d SWAP1\l0x0000005e RETURN\l",style=filled,fillcolor=white];
+"0x5f"[label="0x0000005f JUMPDEST\l0x00000060 ADD\l0x00000061 SWAP1\l0x00000062 JUMP\l",style=filled,fillcolor=white];
+"0x63"[label="0x00000063 INVALID\l",style=filled,fillcolor=white];
+}
