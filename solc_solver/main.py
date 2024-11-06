@@ -6,9 +6,9 @@ from control_flow_graph import ControlFlowGraph
 
 # The solver generates CFG in .dot file and Z3 constraints from the CFG's paths
 class Solver:
-    def __init__(self, source, runtime_bytecode):
+    def __init__(self, source, runtime_opcodes):
         cfg = ControlFlowGraph()
-        cfg.build(runtime_bytecode)
+        cfg.build(runtime_opcodes)
 
         self.source = source
         self.cfg = cfg
@@ -17,24 +17,25 @@ class Solver:
         self.cfg.save_control_flow_graph(os.path.splitext(self.source)[0])
 
 def main():
-    source = "examples/Addition.sol"
-    contract_name = "Addition"
-    solc_version = "0.5.5"
-    evm_version = "petersburg"
+    source = 'examples/Addition.sol'
+    contract_name = 'Addition'
+    solc_version = '0.8.27'
+    evm_version = "shanghai"
 
-    if source.endswith(".sol"):
+    if source.endswith('.sol'):
         compiler_output = compile(solc_version, evm_version, source)
         if not compiler_output:
-            print("No compiler output for: " + source)
+            print('No compiler output for --> ' + source)
         
         for contract_name_item, contract_item in compiler_output['contracts'][source].items():
             if contract_item and contract_name_item != contract_name:
                 continue
             if contract_item['evm']['deployedBytecode']['object']:
+                print('contract --> ', contract_item['evm']['deployedBytecode'])
                 solver = Solver(source, contract_item['evm']['deployedBytecode']['object'])
                 solver.run()
     else:
-        print("Unsupported input file: ", source)
+        print('Unsupported input file --> ', source)
         sys.exit(-1)
 
 if '__main__' == __name__:

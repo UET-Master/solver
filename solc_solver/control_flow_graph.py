@@ -1,4 +1,5 @@
 from utils import remove_swarm_hash, convert_stack_value_to_int
+import eth
 
 # The block contains instructions and it is actually a vertex in CFG
 class Block:
@@ -32,20 +33,16 @@ class ControlFlowGraph:
         self.visited_pcs = set()
         self.visited_branches = dict()
         self.error_pcs = set()
-        self.can_send_ether = False
 
     def build(self, bytecode):
-        bytecode = bytes.fromhex(remove_swarm_hash(bytecode).replace("0x", ""))
+        bytecode = bytes.fromhex(bytecode)
         current_pc = 0
         previous_pc = 0
         block = None
         previous_opcode = None
-        previous_push_value = None
+        previous_push_value = str()
         while current_pc < len(bytecode):
             opcode = bytecode[current_pc]
-
-            if opcode in self.opcode_to_mnemonic and self.opcode_to_mnemonic[opcode] in ["CREATE", "CALL", "DELEGATECALL", "SELFDESTRUCT", "SUICIDE"]:
-                self.can_send_ether = True
 
             if previous_opcode == 255: # SELFDESTRUCT
                 block.set_end_address(previous_pc)
@@ -58,7 +55,7 @@ class ControlFlowGraph:
 
             if opcode == 91 and block.get_instructions(): # JUMPDEST
                 block.set_end_address(previous_pc)
-                if previous_pc not in self.edges and previous_opcode not in [0, 86, 87, 243, 253, 254, 255]: # Terminating/Conditional: STOP, JUMP, JUMPI, RETURN, REVERT, INVALID, SELFDESTRUCT
+                if previous_pc not in self.edges and previous_opcode not in [0, 86, 87, 243, 253, 254, 255]: # Termination and condition
                     self.edges[previous_pc] = []
                     self.edges[previous_pc].append(current_pc)
                 self.vertices[current_pc] = block
@@ -69,17 +66,17 @@ class ControlFlowGraph:
                 if opcode in self.opcode_to_mnemonic:
                     block.add_instruction(current_pc, self.opcode_to_mnemonic[opcode])
                 else:
-                    block.add_instruction(current_pc, "Missing opcode " + hex(opcode))
+                    block.add_instruction(current_pc, 'Missing opcode ' + hex(opcode))
 
             if opcode == 86 or opcode == 87: # JUMP or JUMPI
                 block.set_end_address(current_pc)
                 self.vertices[current_pc] = block
                 block = None
-                if opcode == 86 and previous_opcode and previous_opcode >= 96 and previous_opcode <= 127:
+                if opcode == 86 and previous_opcode and previous_opcode >= 96 and previous_opcode <= 127: # JUMP
                     if current_pc not in self.edges:
                         self.edges[current_pc] = []
                     self.edges[current_pc].append(previous_push_value)
-                if opcode == 87:
+                if opcode == 87: # JUMPI
                     if current_pc not in self.edges:
                         self.edges[current_pc] = []
                     self.edges[current_pc].append(current_pc+1)
@@ -91,15 +88,14 @@ class ControlFlowGraph:
             previous_pc = current_pc
             if opcode >= 96 and opcode <= 127: # PUSH??
                 size = opcode - 96 + 1
-                previous_push_value = ""
                 for i in range(size):
                     try:
-                        previous_push_value += str(hex(bytecode[current_pc+i+1])).replace("0x", "").zfill(2)
+                        previous_push_value += str(hex(bytecode[current_pc + i + 1])).replace('0x', '').zfill(2)
                     except Exception as e:
-                        pass
+                        print('Error: Problem with creating a new string --> ', e)
                 if previous_push_value:
-                    previous_push_value = "0x" + previous_push_value
-                    block.add_instruction(current_pc, self.opcode_to_mnemonic[opcode] + " " + previous_push_value)
+                    previous_push_value = '0x' + previous_push_value
+                    block.add_instruction(current_pc, self.opcode_to_mnemonic[opcode] + ' ' + previous_push_value)
                     previous_push_value = int(previous_push_value, 16)
                     current_pc += size
 
@@ -126,7 +122,7 @@ class ControlFlowGraph:
             # Draw vertices
             label = '"' + hex(block.get_start_address()) + '"[label="'
             for address in block.get_instructions():
-                label += "{0:#0{1}x}".format(address, address_width) + " " + block.get_instructions()[address] +"\l"
+                label += '{0:#0{1}x}'.format(address, address_width) + ' ' + block.get_instructions()[address] + '\l'
             visited_block = False
             for pc in self.error_pcs:
                 if pc in block.get_instructions().keys():
@@ -157,7 +153,7 @@ class ControlFlowGraph:
         f.write('}\n')
         f.close()
 
-    # Using the EVM version - Petersburg
+    # Using the EVM version - Shanghai
     opcode_to_mnemonic = {
         # 0s: Stop and Arithmetic Operations
         0: 'STOP',
@@ -187,8 +183,8 @@ class ControlFlowGraph:
         27: 'SHL',
         28: 'SHR',
         29: 'SAR',
-        # 20s: SHA3
-        32: 'SHA3',
+        # 20s: KECCAK256
+        32: 'KECCAK256',
         # 30s: Environmental Information
         48: 'ADDRESS',
         49: 'BALANCE',
@@ -211,10 +207,11 @@ class ControlFlowGraph:
         65: 'COINBASE',
         66: 'TIMESTAMP',
         67: 'NUMBER',
-        68: 'DIFFICULTY',
+        68: 'PREVRANDAO',
         69: 'GASLIMIT',
         70: 'CHAINID',
         71: 'SELFBALANCE',
+        72: 'BASEFEE',
         # 50s: Stack, Memory, Storage and Flow Operations
         80: 'POP',
         81: 'MLOAD',
@@ -228,7 +225,8 @@ class ControlFlowGraph:
         89: 'MSIZE',
         90: 'GAS',
         91: 'JUMPDEST',
-        # 60s & 70s: Push Operations
+        # 5f, 60s & 70s: Push Operations
+        95: "PUSH0",
         96: 'PUSH1',
         97: 'PUSH2',
         98: 'PUSH3',
@@ -314,7 +312,3 @@ class ControlFlowGraph:
         255: 'SELFDESTRUCT'
     }
 
-
-        
-
-        
