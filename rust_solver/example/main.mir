@@ -1,0 +1,199 @@
+// WARNING: This output format is intended for human consumers only
+// and is subject to change without notice. Knock yourself out.
+fn addition(_1: i32) -> i32 {
+    debug num => _1;
+    let mut _0: i32;
+    let mut _2: i32;
+    let mut _3: std::ops::Range<i32>;
+    let mut _4: std::ops::Range<i32>;
+    let mut _6: std::option::Option<i32>;
+    let mut _7: &mut std::ops::Range<i32>;
+    let mut _8: isize;
+    let mut _10: (i32, bool);
+    scope 1 {
+        debug sum => _2;
+        let mut _5: std::ops::Range<i32>;
+        scope 2 {
+            debug iter => _5;
+            let _9: i32;
+            scope 3 {
+                debug i => _9;
+            }
+        }
+    }
+
+    bb0: {
+        _2 = copy _1;
+        _4 = std::ops::Range::<i32> { start: const 1_i32, end: const 5_i32 };
+        _3 = <std::ops::Range<i32> as IntoIterator>::into_iter(move _4) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _5 = move _3;
+        goto -> bb2;
+    }
+
+    bb2: {
+        _7 = &mut _5;
+        _6 = <std::ops::Range<i32> as Iterator>::next(copy _7) -> [return: bb3, unwind continue];
+    }
+
+    bb3: {
+        _8 = discriminant(_6);
+        switchInt(move _8) -> [0: bb6, 1: bb5, otherwise: bb4];
+    }
+
+    bb4: {
+        unreachable;
+    }
+
+    bb5: {
+        _9 = copy ((_6 as Some).0: i32);
+        _10 = AddWithOverflow(copy _2, copy _9);
+        assert(!move (_10.1: bool), "attempt to compute `{} + {}`, which would overflow", copy _2, copy _9) -> [success: bb7, unwind continue];
+    }
+
+    bb6: {
+        _0 = copy _2;
+        return;
+    }
+
+    bb7: {
+        _2 = move (_10.0: i32);
+        goto -> bb2;
+    }
+}
+
+fn condition(_1: i32) -> i32 {
+    debug num => _1;
+    let mut _0: i32;
+    let _2: i32;
+    let mut _3: (i32, bool);
+    let mut _4: bool;
+    scope 1 {
+        debug counter => _2;
+    }
+
+    bb0: {
+        _3 = AddWithOverflow(copy _1, const 10_i32);
+        assert(!move (_3.1: bool), "attempt to compute `{} + {}`, which would overflow", copy _1, const 10_i32) -> [success: bb1, unwind continue];
+    }
+
+    bb1: {
+        _2 = move (_3.0: i32);
+        _4 = Gt(copy _2, const 10_i32);
+        switchInt(move _4) -> [0: bb3, otherwise: bb2];
+    }
+
+    bb2: {
+        _0 = const 10_i32;
+        goto -> bb4;
+    }
+
+    bb3: {
+        _0 = copy _2;
+        goto -> bb4;
+    }
+
+    bb4: {
+        return;
+    }
+}
+
+fn main() -> () {
+    let mut _0: ();
+    let _1: i32;
+    let _2: ();
+    let mut _3: std::fmt::Arguments<'_>;
+    let _4: &[&str; 3];
+    let _5: &[core::fmt::rt::Argument<'_>; 2];
+    let _6: [core::fmt::rt::Argument<'_>; 2];
+    let mut _7: core::fmt::rt::Argument<'_>;
+    let _8: &i32;
+    let mut _9: core::fmt::rt::Argument<'_>;
+    let _10: &i32;
+    let _11: i32;
+    let _12: ();
+    let mut _13: std::fmt::Arguments<'_>;
+    let _14: &[&str; 2];
+    let _15: &[core::fmt::rt::Argument<'_>; 1];
+    let _16: [core::fmt::rt::Argument<'_>; 1];
+    let mut _17: core::fmt::rt::Argument<'_>;
+    let _18: &i32;
+    let _19: i32;
+    scope 1 {
+        debug num => _1;
+    }
+
+    bb0: {
+        _1 = const 15_i32;
+        _4 = const main::promoted[1];
+        _8 = &_1;
+        _7 = core::fmt::rt::Argument::<'_>::new_display::<i32>(copy _8) -> [return: bb1, unwind continue];
+    }
+
+    bb1: {
+        _11 = addition(copy _1) -> [return: bb2, unwind continue];
+    }
+
+    bb2: {
+        _10 = &_11;
+        _9 = core::fmt::rt::Argument::<'_>::new_display::<i32>(copy _10) -> [return: bb3, unwind continue];
+    }
+
+    bb3: {
+        _6 = [move _7, move _9];
+        _5 = &_6;
+        _3 = Arguments::<'_>::new_v1::<3, 2>(copy _4, copy _5) -> [return: bb4, unwind continue];
+    }
+
+    bb4: {
+        _2 = _print(move _3) -> [return: bb5, unwind continue];
+    }
+
+    bb5: {
+        _14 = const main::promoted[0];
+        _19 = condition(copy _1) -> [return: bb6, unwind continue];
+    }
+
+    bb6: {
+        _18 = &_19;
+        _17 = core::fmt::rt::Argument::<'_>::new_display::<i32>(copy _18) -> [return: bb7, unwind continue];
+    }
+
+    bb7: {
+        _16 = [move _17];
+        _15 = &_16;
+        _13 = Arguments::<'_>::new_v1::<2, 1>(copy _14, copy _15) -> [return: bb8, unwind continue];
+    }
+
+    bb8: {
+        _12 = _print(move _13) -> [return: bb9, unwind continue];
+    }
+
+    bb9: {
+        return;
+    }
+}
+
+const main::promoted[0]: &[&str; 2] = {
+    let mut _0: &[&str; 2];
+    let mut _1: [&str; 2];
+
+    bb0: {
+        _1 = [const "Condition ", const "\n"];
+        _0 = &_1;
+        return;
+    }
+}
+
+const main::promoted[1]: &[&str; 3] = {
+    let mut _0: &[&str; 3];
+    let mut _1: [&str; 3];
+
+    bb0: {
+        _1 = [const "The addition of ", const " is ", const "\n"];
+        _0 = &_1;
+        return;
+    }
+}

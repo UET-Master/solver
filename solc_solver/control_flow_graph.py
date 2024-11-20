@@ -27,133 +27,7 @@ class Block:
         return self.instructions
 
 class ControlFlowGraph:
-    def __init__(self):
-        self.edges = dict()
-        self.vertices = dict()
-        self.visited_pcs = set()
-        self.visited_branches = dict()
-        self.error_pcs = set()
-
-    def build(self, bytecode):
-        bytecode = bytes.fromhex(bytecode)
-        current_pc = 0
-        previous_pc = 0
-        block = None
-        previous_opcode = None
-        previous_push_value = str()
-        while current_pc < len(bytecode):
-            opcode = bytecode[current_pc]
-
-            if previous_opcode == 255: # SELFDESTRUCT
-                block.set_end_address(previous_pc)
-                self.vertices[current_pc] = block
-                block = None
-
-            if block is None:
-                block = Block()
-                block.set_start_address(current_pc)
-
-            if opcode == 91 and block.get_instructions(): # JUMPDEST
-                block.set_end_address(previous_pc)
-                if previous_pc not in self.edges and previous_opcode not in [0, 86, 87, 243, 253, 254, 255]: # Termination and condition
-                    self.edges[previous_pc] = []
-                    self.edges[previous_pc].append(current_pc)
-                self.vertices[current_pc] = block
-                block = Block()
-                block.set_start_address(current_pc)
-
-            if opcode < 96 or opcode > 127: # PUSH??
-                if opcode in self.opcode_to_mnemonic:
-                    block.add_instruction(current_pc, self.opcode_to_mnemonic[opcode])
-                else:
-                    block.add_instruction(current_pc, 'Missing opcode ' + hex(opcode))
-
-            if opcode == 86 or opcode == 87: # JUMP or JUMPI
-                block.set_end_address(current_pc)
-                self.vertices[current_pc] = block
-                block = None
-                if opcode == 86 and previous_opcode and previous_opcode >= 96 and previous_opcode <= 127: # JUMP
-                    if current_pc not in self.edges:
-                        self.edges[current_pc] = []
-                    self.edges[current_pc].append(previous_push_value)
-                if opcode == 87: # JUMPI
-                    if current_pc not in self.edges:
-                        self.edges[current_pc] = []
-                    self.edges[current_pc].append(current_pc+1)
-                    if previous_opcode and previous_opcode >= 96 and previous_opcode <= 127:
-                        if current_pc not in self.edges:
-                            self.edges[current_pc] = []
-                        self.edges[current_pc].append(previous_push_value)
-
-            previous_pc = current_pc
-            if opcode >= 96 and opcode <= 127: # PUSH??
-                size = opcode - 96 + 1
-                for i in range(size):
-                    try:
-                        previous_push_value += str(hex(bytecode[current_pc + i + 1])).replace('0x', '').zfill(2)
-                    except Exception as e:
-                        print('Error: Problem with creating a new string --> ', e)
-                if previous_push_value:
-                    previous_push_value = '0x' + previous_push_value
-                    block.add_instruction(current_pc, self.opcode_to_mnemonic[opcode] + ' ' + previous_push_value)
-                    previous_push_value = int(previous_push_value, 16)
-                    current_pc += size
-
-            current_pc += 1
-            previous_opcode = opcode
-
-        if block:
-            block.set_end_address(previous_pc)
-            self.vertices[current_pc] = block
-
-    def save_control_flow_graph(self, filename):
-        f = open(filename+'.dot', 'w')
-        f.write('digraph cfg {\n')
-        f.write('rankdir = TB;\n')
-        f.write('size = "240"\n')
-        f.write('graph[fontname = Courier, fontsize = 14.0, labeljust = l, nojustify = true];node[shape = record];\n')
-        address_width = 10
-        
-        for block in self.vertices.values():
-            if len(hex(list(block.get_instructions().keys())[-1])) > address_width:
-                address_width = len(hex(list(block.get_instructions().keys())[-1]))
-        
-        for block in self.vertices.values():
-            # Draw vertices
-            label = '"' + hex(block.get_start_address()) + '"[label="'
-            for address in block.get_instructions():
-                label += '{0:#0{1}x}'.format(address, address_width) + ' ' + block.get_instructions()[address] + '\l'
-            visited_block = False
-            for pc in self.error_pcs:
-                if pc in block.get_instructions().keys():
-                    f.write(label + '",style=filled,fillcolor=red];\n')
-                    visited_block = True
-                    break
-            if not visited_block:
-                if  block.get_start_address() in self.visited_pcs and block.get_end_address() in self.visited_pcs:
-                    f.write(label + '",style=filled,fillcolor=gray];\n')
-                else:
-                    f.write(label + '",style=filled,fillcolor=white];\n')
-            # Draw edges
-            if block.get_end_address() in self.edges:
-                # JUMPI
-                if list(block.get_instructions().values())[-1] == "JUMPI":
-                    if hex(block.get_end_address()) in self.visited_branches and 0 in self.visited_branches[hex(block.get_end_address())] and self.visited_branches[hex(block.get_end_address())][0]["expression"]:
-                        f.write('"'+ hex(block.get_start_address()) +'" -> "'+ hex(self.edges[block.get_end_address()][0]) +'" [label=" '+ str(self.visited_branches[hex(block.get_end_address())][0]["expression"][-1]) +'",color="red"];\n')
-                    else:
-                        f.write('"'+ hex(block.get_start_address()) +'" -> "'+ hex(self.edges[block.get_end_address()][0]) +'" [label="",color="red"];\n')
-                    if hex(block.get_end_address()) in self.visited_branches and 1 in self.visited_branches[hex(block.get_end_address())] and self.visited_branches[hex(block.get_end_address())][1]["expression"]:
-                        f.write('"'+ hex(block.get_start_address())+'" -> "'+ hex(self.edges[block.get_end_address()][1]) +'" [label=" '+str(self.visited_branches[hex(block.get_end_address())][1]["expression"][-1]) +'",color="green"];\n')
-                    else:
-                        f.write('"'+ hex(block.get_start_address())+'" -> "'+ hex(self.edges[block.get_end_address()][1]) +'" [label="",color="green"];\n')
-                # Other instructions
-                else:
-                    for i in range(len(self.edges[block.get_end_address()])):
-                        f.write('"'+ hex(block.get_start_address()) +'" -> "'+ hex(self.edges[block.get_end_address()][i]) +'" [label="",color="black"];\n')
-        f.write('}\n')
-        f.close()
-
-    # Using the EVM version - Shanghai
+     # Using the EVM version - Shanghai
     opcode_to_mnemonic = {
         # 0s: Stop and Arithmetic Operations
         0: 'STOP',
@@ -311,4 +185,129 @@ class ControlFlowGraph:
         254: 'INVALID',
         255: 'SELFDESTRUCT'
     }
+    
+    def __init__(self):
+        self.edges = dict()
+        self.vertices = dict()
+        self.visited_pcs = set()
+        self.visited_branches = dict()
+        self.error_pcs = set()
 
+    def build(self, bytecode):
+        bytecode = bytes.fromhex(bytecode)
+        current_pc = 0
+        previous_pc = 0
+        block = None
+        previous_opcode = None
+        previous_push_value = str()
+        while current_pc < len(bytecode):
+            opcode = bytecode[current_pc]
+
+            if previous_opcode == 255: # SELFDESTRUCT
+                block.set_end_address(previous_pc)
+                self.vertices[current_pc] = block
+                block = None
+
+            if block is None:
+                block = Block()
+                block.set_start_address(current_pc)
+
+            if opcode == 91 and block.get_instructions(): # JUMPDEST
+                block.set_end_address(previous_pc)
+                if previous_pc not in self.edges and previous_opcode not in [0, 86, 87, 243, 253, 254, 255]: # Termination and condition
+                    self.edges[previous_pc] = []
+                    self.edges[previous_pc].append(current_pc)
+                self.vertices[current_pc] = block
+                block = Block()
+                block.set_start_address(current_pc)
+
+            if opcode < 96 or opcode > 127: # PUSH??
+                if opcode in self.opcode_to_mnemonic:
+                    block.add_instruction(current_pc, self.opcode_to_mnemonic[opcode])
+                else:
+                    block.add_instruction(current_pc, 'Missing opcode ' + hex(opcode))
+
+            if opcode == 86 or opcode == 87: # JUMP or JUMPI
+                block.set_end_address(current_pc)
+                self.vertices[current_pc] = block
+                block = None
+                if opcode == 86 and previous_opcode and previous_opcode >= 96 and previous_opcode <= 127: # JUMP
+                    if current_pc not in self.edges:
+                        self.edges[current_pc] = []
+                    self.edges[current_pc].append(previous_push_value)
+                if opcode == 87: # JUMPI
+                    if current_pc not in self.edges:
+                        self.edges[current_pc] = []
+                    self.edges[current_pc].append(current_pc+1)
+                    if previous_opcode and previous_opcode >= 96 and previous_opcode <= 127:
+                        if current_pc not in self.edges:
+                            self.edges[current_pc] = []
+                        self.edges[current_pc].append(previous_push_value)
+
+            previous_pc = current_pc
+            if opcode >= 96 and opcode <= 127: # PUSH??
+                size = opcode - 96 + 1
+                for i in range(size):
+                    try:
+                        previous_push_value += str(hex(bytecode[current_pc + i + 1])).replace('0x', '').zfill(2)
+                    except Exception as e:
+                        print('Error: Problem with creating a new string --> ', e)
+                if previous_push_value:
+                    previous_push_value = '0x' + previous_push_value
+                    block.add_instruction(current_pc, self.opcode_to_mnemonic[opcode] + ' ' + previous_push_value)
+                    previous_push_value = int(previous_push_value, 16)
+                    current_pc += size
+
+            current_pc += 1
+            previous_opcode = opcode
+
+        if block:
+            block.set_end_address(previous_pc)
+            self.vertices[current_pc] = block
+
+    def save_control_flow_graph(self, filename):
+        f = open(filename+'.dot', 'w')
+        f.write('digraph cfg {\n')
+        f.write('rankdir = TB;\n')
+        f.write('size = "240"\n')
+        f.write('graph[fontname = Courier, fontsize = 14.0, labeljust = l, nojustify = true];node[shape = record];\n')
+        address_width = 10
+        
+        for block in self.vertices.values():
+            if len(hex(list(block.get_instructions().keys())[-1])) > address_width:
+                address_width = len(hex(list(block.get_instructions().keys())[-1]))
+        
+        for block in self.vertices.values():
+            # Draw vertices
+            label = '"' + hex(block.get_start_address()) + '"[label="'
+            for address in block.get_instructions():
+                label += '{0:#0{1}x}'.format(address, address_width) + ' ' + block.get_instructions()[address] + '\l'
+            visited_block = False
+            for pc in self.error_pcs:
+                if pc in block.get_instructions().keys():
+                    f.write(label + '",style=filled,fillcolor=red];\n')
+                    visited_block = True
+                    break
+            if not visited_block:
+                if  block.get_start_address() in self.visited_pcs and block.get_end_address() in self.visited_pcs:
+                    f.write(label + '",style=filled,fillcolor=gray];\n')
+                else:
+                    f.write(label + '",style=filled,fillcolor=white];\n')
+            # Draw edges
+            if block.get_end_address() in self.edges:
+                # JUMPI
+                if list(block.get_instructions().values())[-1] == "JUMPI":
+                    if hex(block.get_end_address()) in self.visited_branches and 0 in self.visited_branches[hex(block.get_end_address())] and self.visited_branches[hex(block.get_end_address())][0]["expression"]:
+                        f.write('"'+ hex(block.get_start_address()) +'" -> "'+ hex(self.edges[block.get_end_address()][0]) +'" [label=" '+ str(self.visited_branches[hex(block.get_end_address())][0]["expression"][-1]) +'",color="red"];\n')
+                    else:
+                        f.write('"'+ hex(block.get_start_address()) +'" -> "'+ hex(self.edges[block.get_end_address()][0]) +'" [label="",color="red"];\n')
+                    if hex(block.get_end_address()) in self.visited_branches and 1 in self.visited_branches[hex(block.get_end_address())] and self.visited_branches[hex(block.get_end_address())][1]["expression"]:
+                        f.write('"'+ hex(block.get_start_address())+'" -> "'+ hex(self.edges[block.get_end_address()][1]) +'" [label=" '+str(self.visited_branches[hex(block.get_end_address())][1]["expression"][-1]) +'",color="green"];\n')
+                    else:
+                        f.write('"'+ hex(block.get_start_address())+'" -> "'+ hex(self.edges[block.get_end_address()][1]) +'" [label="",color="green"];\n')
+                # Other instructions
+                else:
+                    for i in range(len(self.edges[block.get_end_address()])):
+                        f.write('"'+ hex(block.get_start_address()) +'" -> "'+ hex(self.edges[block.get_end_address()][i]) +'" [label="",color="black"];\n')
+        f.write('}\n')
+        f.close()
