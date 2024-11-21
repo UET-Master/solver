@@ -70,16 +70,16 @@ class ControlFlowGraph:
                     block.add_instruction(code)
 
                 if re.search(r"\[.*?\]", code) and block_checkpoint:
+                    # An example of code: switchInt(move _8) -> [0: bb6, 1: bb5, otherwise: bb4]
                     extractions = code.split(' -> ')
                     block.add_instruction(extractions[0])
                     
+                    self.edges[block_id] = []
                     true_path_indicator = self.jump_mnemonic[4] + ':'
                     false_path_indicator = self.jump_mnemonic[3] + ':'
                     if true_path_indicator in extractions[1] or false_path_indicator in extractions[1]:
                         self.visited_branches[block_id] = dict()
-                    self.edges[block_id] = []
 
-                    # An example for extractions[1] is [0: bb6, 1: bb5, otherwise: bb4]
                     jump_conditions = extractions[1].split(',')
                     for condition in jump_conditions:
                         if self.jump_mnemonic[1] in condition or self.jump_mnemonic[2] in condition: # return or success
@@ -97,6 +97,7 @@ class ControlFlowGraph:
                     self.edges[block_id] = []
                     self.edges[block_id].append(code[code.find('bb'):code.find(':')])
 
+                # Mark the end of a block
                 if code.startswith('}') and block_checkpoint:
                     self.vertices[block_id] = block
                     block_checkpoint = False
@@ -109,7 +110,7 @@ class ControlFlowGraph:
         f.write('rankdir = TB;\n')
         f.write('size = "240"\n')
         f.write('graph[fontname = Courier, fontsize = 14.0, labeljust = l, nojustify = true];node[shape = record];\n')
- 
+        
         for block_id, block in self.vertices.items():
             print("Block ---> ", block_id, block.get_instructions())
             # Draw vertices
