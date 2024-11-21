@@ -1,0 +1,19 @@
+digraph cfg {
+rankdir = TB;
+size = "240"
+graph[fontname = Courier, fontsize = 14.0, labeljust = l, nojustify = true];node[shape = record];
+"bb0"[label="_2 = copy _1;\l_4 = std::ops::Range::&lt;i32&gt; &lt;start: const 1_i32, end: const 5_i32&gt;;\l_3 = &lt;std::ops::Range&lt;i32&gt; as IntoIterator&gt;::into_iter(move _4)\l",style=filled,fillcolor=white];
+"bb0" -> "bb1" [label="",color="black"];
+"bb1"[label="_5 = move _3;\l",style=filled,fillcolor=white];
+"bb1" -> "bb2" [label="",color="black"];
+"bb2"[label="_7 = &mut _5;\l_6 = &lt;std::ops::Range&lt;i32&gt; as Iterator&gt;::next(copy _7)\l",style=filled,fillcolor=white];
+"bb2" -> "bb3" [label="",color="black"];
+"bb3"[label="_8 = discriminant(_6);\lswitchInt(move _8)\l",style=filled,fillcolor=white];
+"bb3" -> "bb6" [label="switchInt(move _8) == 0",color="red"];
+"bb3" -> "bb5" [label="switchInt(move _8) == 1",color="green"];
+"bb5"[label="_9 = copy ((_6 as Some).0: i32);\l_10 = AddWithOverflow(copy _2, copy _9);\lassert(!move (_10.1: bool), "attempt to compute `{} + {}`, which would overflow", copy _2, copy _9)\l",style=filled,fillcolor=white];
+"bb5" -> "bb7" [label="",color="black"];
+"bb6"[label="_0 = copy _2;\l",style=filled,fillcolor=white];
+"bb7"[label="_2 = move (_10.0: i32);\l",style=filled,fillcolor=white];
+"bb7" -> "bb2" [label="",color="black"];
+}

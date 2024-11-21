@@ -27,8 +27,6 @@ def main():
     with open(compiler_output_file, mode='r') as file:
         file_lines = file.readlines()
         mir_codes = [line.strip() for line in file_lines]
-
-    print("Mir codes --> ", mir_codes)
     solver = Solver(mir_codes)
     solver.run(cfg_file)
 
