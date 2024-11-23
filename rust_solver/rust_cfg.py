@@ -71,27 +71,27 @@ class ControlFlowGraph:
 
                 if re.search(r"\[.*?\]", code) and block_checkpoint:
                     # An example of code: switchInt(move _8) -> [0: bb6, 1: bb5, otherwise: bb4]
-                    extractions = code.split(' -> ')
-                    block.add_instruction(extractions[0])
+                    subcodes = re.split(r'\s*->\s*', code)
+                    block.add_instruction(subcodes[0])
                     
                     self.edges[block_id] = []
                     true_path_indicator = self.jump_mnemonic[4] + ':'
                     false_path_indicator = self.jump_mnemonic[3] + ':'
-                    if true_path_indicator in extractions[1] or false_path_indicator in extractions[1]:
+                    if true_path_indicator in subcodes[1] or false_path_indicator in subcodes[1]:
                         self.visited_branches[block_id] = dict()
 
-                    jump_conditions = extractions[1].split(',')
+                    jump_conditions = subcodes[1].split(',')
                     for condition in jump_conditions:
                         if self.jump_mnemonic[1] in condition or self.jump_mnemonic[2] in condition: # return or success
                             self.edges[block_id].append(condition.split(':')[1].strip())
 
                         if false_path_indicator in condition: #  0 (False)
                             self.edges[block_id].append(condition.split(':')[1].strip())
-                            self.visited_branches[block_id][0] = { 'expression': extractions[0] + ' == ' + self.jump_mnemonic[3] }
+                            self.visited_branches[block_id][0] = { 'expression': subcodes[0] + ' == ' + self.jump_mnemonic[3] }
                         
                         if true_path_indicator in condition: #  1 (True)
                             self.edges[block_id].append(condition.split(':')[1].strip())
-                            self.visited_branches[block_id][1] = { 'expression': extractions[0] + ' == ' + self.jump_mnemonic[4] }
+                            self.visited_branches[block_id][1] = { 'expression': subcodes[0] + ' == ' + self.jump_mnemonic[4] }
                 
                 if self.jump_mnemonic[0] in code and block_checkpoint:
                     self.edges[block_id] = []

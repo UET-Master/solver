@@ -1,4 +1,3 @@
-import os
 import subprocess
 from rust_cfg import ControlFlowGraph
 
