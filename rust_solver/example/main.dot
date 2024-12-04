@@ -11,7 +11,7 @@ graph[fontname = Courier, fontsize = 14.0, labeljust = l, nojustify = true];node
 "bb3"[label="_8 = discriminant(_6);\lswitchInt(move _8)\l",style=filled,fillcolor=white];
 "bb3" -> "bb6" [label="switchInt(move _8) == 0",color="red"];
 "bb3" -> "bb5" [label="switchInt(move _8) == 1",color="green"];
-"bb5"[label="_9 = copy ((_6 as Some).0: i32);\l_10 = AddWithOverflow(copy _2, copy _9);\lassert(!move (_10.1: bool), "attempt to compute `{} + {}`, which would overflow", copy _2, copy _9)\l",style=filled,fillcolor=white];
+"bb5"[label="_9 = copy ((_6 as Some).0: i32);\l_10 = AddWithOverflow(copy _2, copy _9);\lassert(!move (_10.1: bool), [attempt to compute \{\} + \{\}, which would overflow], copy _2, copy _9)\l",style=filled,fillcolor=white];
 "bb5" -> "bb7" [label="",color="black"];
 "bb6"[label="_0 = copy _2;\l",style=filled,fillcolor=white];
 "bb7"[label="_2 = move (_10.0: i32);\l",style=filled,fillcolor=white];

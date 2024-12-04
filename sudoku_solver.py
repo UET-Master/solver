@@ -35,6 +35,7 @@ solver = Solver()
 solver.add(maxtrix_constraint + instance_contraint)
 if solver.check() == sat:
     model = solver.model()
+    print('Model --> ', model)
     res = [[model.evaluate(matrix[i][j]) for j in range(9)] for i in range(9)]
     print_matrix(res)
 else:

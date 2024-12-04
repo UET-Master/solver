@@ -38,9 +38,9 @@ class ControlFlowGraph:
         self.visited_branches = dict()
 
     def build(self, mir_codes, considered_func = 'addition'):
-        # The checkpoint indicates the following code are considered
+        # The checkpoint indicates that the following code are considered
         scope_checkpoint = False
-        # The checkpoint indicates the following block are considered
+        # The checkpoint indicates that the following block are considered
         block_checkpoint = False
         block_id = None
         block = None
@@ -135,7 +135,3 @@ class ControlFlowGraph:
 
         f.write('}\n')
         f.close()
-
-                
-        
-

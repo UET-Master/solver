@@ -1,5 +1,5 @@
 import subprocess
-from rust_cfg import ControlFlowGraph
+from control_flow_graph import ControlFlowGraph
 
 # The solver generates CFG in .dot file and Z3 constraints from the CFG's paths
 class Solver:
